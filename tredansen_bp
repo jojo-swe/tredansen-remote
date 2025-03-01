@@ -1,0 +1,98 @@
+# File: blueprints/automation/generic_ikea_tradfri_remote_blinds_control.yaml
+# This blueprint enables control of covers (blinds) using an IKEA Tradfri open/close remote via ZHA.
+# It supports three commands:
+#   • "up_open": Open the covers (set to a defined open position)
+#   • "down_close": Close the covers (set to a defined close position)
+#   • "stop", "stop_opening", "stop_closing": Stop the covers (set to a defined stop position)
+#
+# Customize the remote, covers, and positions when creating an automation from this blueprint.
+
+blueprint:
+  name: Generic IKEA Tradfri Remote Blinds Control
+  description: >
+    Control covers (blinds) using an IKEA Tradfri open/close remote over ZHA.
+    The remote sends commands that open, close, or stop the covers.
+  domain: automation
+  input:
+    remote:
+      name: Remote
+      description: >
+        Select the remote device to use (e.g., your IKEA Tradfri open/close remote).
+      selector:
+        device:
+          integration: zha
+      default: xxx  # Default remote device ID.
+    covers:
+      name: Covers
+      description: >
+        Select the covers to control.
+      selector:
+        target:
+          entity:
+            domain: cover
+      default:
+        - xxx  # First cover entity ID.
+        - xxx  # Second cover entity ID.
+    open_position:
+      name: Open Position
+      description: The cover position to use when opening.
+      default: 100
+      selector:
+        number:
+          min: 0
+          max: 100
+    close_position:
+      name: Close Position
+      description: The cover position to use when closing.
+      default: 38
+      selector:
+        number:
+          min: 0
+          max: 100
+    stop_position:
+      name: Stop Position
+      description: The cover position to use when stopping.
+      default: 95
+      selector:
+        number:
+          min: 0
+          max: 100
+
+trigger:
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input remote
+
+action:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.command == 'up_open' }}"
+        sequence:
+          - service: cover.set_cover_position
+            target: !input covers
+            data:
+              position: !input open_position
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.event.data.command == 'down_close' }}"
+        sequence:
+          - service: cover.set_cover_position
+            target: !input covers
+            data:
+              position: !input close_position
+
+      - conditions:
+          - condition: template
+            value_template: >
+              {{ trigger.event.data.command in ['stop', 'stop_opening', 'stop_closing'] }}
+        sequence:
+          - service: cover.set_cover_position
+            target: !input covers
+            data:
+              position: !input stop_position
+    default: []
+
+mode: restart
