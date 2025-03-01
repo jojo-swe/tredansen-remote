@@ -1,41 +1,47 @@
 # File: blueprints/automation/generic_ikea_tradfri_remote_blinds_control.yaml
-# This blueprint enables control of covers (blinds) using an IKEA Tradfri open/close remote via ZHA.
+# This blueprint allows you to control one or more covers (blinds) using an IKEA Tradfri open/close remote over ZHA.
 # It supports three commands:
 #   • "up_open": Open the covers (set to a defined open position)
 #   • "down_close": Close the covers (set to a defined close position)
 #   • "stop", "stop_opening", "stop_closing": Stop the covers (set to a defined stop position)
 #
-# Customize the remote, covers, and positions when creating an automation from this blueprint.
+# The blueprint uses default device IDs and positions from your custom automations.
+# You can change these defaults when you create an automation from this blueprint.
 
 blueprint:
   name: Generic IKEA Tradfri Remote Blinds Control
   description: >
-    Control covers (blinds) using an IKEA Tradfri open/close remote over ZHA.
-    The remote sends commands that open, close, or stop the covers.
+    This blueprint enables control of covers (blinds) with an IKEA Tradfri open/close remote using ZHA.
+    It listens for remote button events and sets the covers to the desired positions:
+      - "up_open" sets the covers to the open position.
+      - "down_close" sets the covers to the closed position.
+      - "stop", "stop_opening", or "stop_closing" sets the covers to the stop position.
   domain: automation
   input:
     remote:
       name: Remote
       description: >
-        Select the remote device to use (e.g., your IKEA Tradfri open/close remote).
+        The remote device to use (e.g., your IKEA Tradfri open/close remote).
+        The default device ID is from your custom automation.
       selector:
         device:
           integration: zha
-      default: xxx  # Default remote device ID.
+      default: 123  # Default remote device ID from your custom automations.
     covers:
       name: Covers
       description: >
-        Select the covers to control.
+        The covers to control.
+        You can select one or multiple covers.
       selector:
         target:
           entity:
             domain: cover
       default:
-        - xxx  # First cover entity ID.
-        - xxx  # Second cover entity ID.
+        - 123  # First cover entity ID.
+        - 123  # Second cover entity ID.
     open_position:
       name: Open Position
-      description: The cover position to use when opening.
+      description: The position to set when opening the covers.
       default: 100
       selector:
         number:
@@ -43,7 +49,7 @@ blueprint:
           max: 100
     close_position:
       name: Close Position
-      description: The cover position to use when closing.
+      description: The position to set when closing the covers.
       default: 38
       selector:
         number:
@@ -51,7 +57,7 @@ blueprint:
           max: 100
     stop_position:
       name: Stop Position
-      description: The cover position to use when stopping.
+      description: The position to set when stopping the covers.
       default: 95
       selector:
         number:
@@ -59,13 +65,15 @@ blueprint:
           max: 100
 
 trigger:
+  # Trigger when a ZHA event is fired by the remote.
   - platform: event
     event_type: zha_event
     event_data:
-      device_id: !input remote
+      device_id: !input remote  # Uses the remote device from the blueprint input.
 
 action:
   - choose:
+      # Branch for opening the covers:
       - conditions:
           - condition: template
             value_template: "{{ trigger.event.data.command == 'up_open' }}"
@@ -75,6 +83,7 @@ action:
             data:
               position: !input open_position
 
+      # Branch for closing the covers:
       - conditions:
           - condition: template
             value_template: "{{ trigger.event.data.command == 'down_close' }}"
@@ -84,6 +93,7 @@ action:
             data:
               position: !input close_position
 
+      # Branch for stopping the covers:
       - conditions:
           - condition: template
             value_template: >
@@ -93,6 +103,6 @@ action:
             target: !input covers
             data:
               position: !input stop_position
-    default: []
+    default: []  # If no condition matches, do nothing.
 
-mode: restart
+mode: restart  # Allows the automation to restart if a new event is triggered while already running.
