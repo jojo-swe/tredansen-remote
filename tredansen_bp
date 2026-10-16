@@ -5,8 +5,8 @@
 #   • "down_close": Close the covers (set to a defined close position)
 #   • "stop", "stop_opening", "stop_closing": Stop the covers (set to a defined stop position)
 #
-# The blueprint uses default device IDs and positions from your custom automations.
-# You can change these defaults when you create an automation from this blueprint.
+# Select the remote and covers when you create an automation from this blueprint.
+# Open, close, and stop positions have defaults you can override.
 
 blueprint:
   name: Generic IKEA Tradfri Remote Blinds Control
@@ -22,11 +22,9 @@ blueprint:
       name: Remote
       description: >
         The remote device to use (e.g., your IKEA Tradfri open/close remote).
-        The default device ID is from your custom automation.
       selector:
         device:
           integration: zha
-      default: 123  # Default remote device ID from your custom automations.
     covers:
       name: Covers
       description: >
@@ -36,9 +34,6 @@ blueprint:
         target:
           entity:
             domain: cover
-      default:
-        - 123  # First cover entity ID.
-        - 123  # Second cover entity ID.
     open_position:
       name: Open Position
       description: The position to set when opening the covers.
